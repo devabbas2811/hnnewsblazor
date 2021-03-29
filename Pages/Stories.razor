@@ -1,0 +1,133 @@
+@page "/stories"
+@inject HttpClient Http
+@using HNNews.Shared.Loader
+@using Models
+@inject Services.HackerNewsService hackerNewsService
+@inject IJSRuntime jsRuntime
+@inject NavigationManager NavigationManager
+<h1>Hacker News</h1>
+
+<p>This component demonstrates fetching data from the Hacker News Api.</p>
+<div class="input-group input-group-lg">
+  <div class="input-group-prepend">
+    <span class="input-group-text" id="inputGroup-sizing-lg">Search</span>
+  </div>
+  <input type="text" class="form-control" aria-label="Search" placeholder="Search Stories" aria-describedby="inputGroup-sizing-sm"
+    value="@stringValue" @oninput="(EventArgs) => {SetValue(EventArgs.Value.ToString());}">
+</div>
+
+
+@if (hackerNewsStories == null)
+{
+
+<Loader />
+}
+else
+{
+  <div class="row">
+    @foreach (var story in hackerNewsStories)
+    {
+      <div class="col-md-4" @onclick="(() => OpenStoryUrl(story.url))">
+        <div class="card card-1">
+          <h3>@story.title</h3>
+          <p>By:@story.by</p>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@* <div style="height:500px;overflow-y:scroll">
+
+  <Virtualize Context="story" ItemsProvider="@LoadCars" ItemSize="15">
+  <ItemContent>
+  <div class="row">
+  <div class="col-md-12" @onclick="(() => OpenStoryUrl(story.url))">
+  <div class="card card-1">
+  <h3>@story.title</h3>
+  <p>By:@story.by</p>
+  </div>
+  </div>
+  </div>
+  </ItemContent>
+  <Placeholder>
+  <p>Loading&hellip;</p>
+  </Placeholder>
+  </Virtualize>
+  </div> *@
+
+
+
+@code {
+  private List<HackerNewsStory> hackerNewsStories;
+
+  string stringValue = "";
+
+  private async Task SetValue(string Value)
+  {
+    stringValue = Value;
+    if (!String.IsNullOrEmpty(stringValue))
+    {
+
+      hackerNewsStories = await hackerNewsService.SearchStory(stringValue);
+
+    }
+    else
+    {
+      hackerNewsStories = await hackerNewsService.SearchStory("");
+
+    }
+
+  }
+
+  protected override async Task OnInitializedAsync()
+  {
+
+    hackerNewsStories = await hackerNewsService.SearchStory("");
+
+  }
+  protected async Task GetStoryBySearch(KeyboardEventArgs e, string searchTerm)
+  {
+
+    if (searchTerm == null)
+    {
+
+      hackerNewsStories = await hackerNewsService.SearchStory("");
+
+    }
+    else
+    {
+
+      hackerNewsStories = await hackerNewsService.SearchStory(searchTerm);
+
+    }
+
+
+
+  }
+
+
+  private async Task buttonClick()
+  {
+
+    await hackerNewsService.SearchStory("");
+  }
+
+  @* private async ValueTask<ItemsProviderResult<HackerNewsStory>> LoadCars(ItemsProviderRequest request)
+    {
+
+
+    hackerNewsStories = await hackerNewsService.SearchStory("");
+
+    return new
+    ItemsProviderResult<HackerNewsStory>(hackerNewsStories.Skip(request.StartIndex).Take(request.Count),hackerNewsStories.Count());
+    } *@
+
+  private async void OpenStoryUrl(string url)
+  {
+    await jsRuntime.InvokeAsync<object>("open", url, "_blank");
+
+  }
+
+
+}
